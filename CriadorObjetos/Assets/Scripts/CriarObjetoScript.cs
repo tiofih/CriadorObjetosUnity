@@ -20,7 +20,10 @@ public class CriarObjetoScript : MonoBehaviour
     public Toggle localToggle;
     public Toggle vuforiaToggle;
 
+    public TMP_Text errorText;
+
     public GameObject novoObjeto;
+    public Transform imageTarget;
     public GameObject arCam;
     public GameObject cam;
 
@@ -64,31 +67,38 @@ public class CriarObjetoScript : MonoBehaviour
 
     void PegarCoordenadasLocal()
     {
-        if (!vuforiaToggle.isOn)
+        GameObject obj = Instantiate(novoObjeto, imageTarget);
+        try
         {
-            try
-            {
-                novaPos = new Vector3(
-                float.Parse(posX.text),
-                float.Parse(posY.text),
-                float.Parse(posZ.text));
+            novaPos = new Vector3(
+            float.Parse(posX.text),
+            float.Parse(posY.text),
+            float.Parse(posZ.text));
 
-                novaRot = new Vector3(
-                float.Parse(rotX.text),
-                float.Parse(rotY.text),
-                float.Parse(rotZ.text));
-            }
-            catch (System.Exception)
+            novaRot = new Vector3(
+            float.Parse(rotX.text),
+            float.Parse(rotY.text),
+            float.Parse(rotZ.text));
+        }
+        catch (System.Exception e)
+        {
+            Debug.Log(e.Message);
+            if (e.Message == "Invalid format.")
             {
-                Debug.LogWarning("Campo Vazio");
-                return;
+                errorText.text = "Por favor, preencha todos os campos";
             }
+            return;
+        }
+        if (vuforiaToggle.isOn)
+        {
+            obj.transform.localPosition = novaPos;
+            obj.transform.localRotation = Quaternion.Euler(novaRot);
         }
         else
         {
-
+            obj.transform.position = novaPos;
+            obj.transform.rotation = Quaternion.Euler(novaRot);
         }
-        Instantiate(novoObjeto, novaPos, Quaternion.Euler(novaRot));
     }
 
     IEnumerator PegarCoordenadasGithub()
@@ -107,13 +117,18 @@ public class CriarObjetoScript : MonoBehaviour
             string[] split = downloadText.Split(new char[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
             novaPos = new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
             novaRot = new Vector3(float.Parse(split[3]), float.Parse(split[4]), float.Parse(split[5]));
-            if (!vuforiaToggle.isOn)
+
+            GameObject obj = Instantiate(novoObjeto, imageTarget);
+
+            if (vuforiaToggle.isOn)
             {
-                Instantiate(novoObjeto, novaPos, Quaternion.Euler(novaRot));
+                obj.transform.localPosition = novaPos;
+                obj.transform.localRotation = Quaternion.Euler(novaRot);
             }
             else
             {
-
+                obj.transform.position = novaPos;
+                obj.transform.rotation = Quaternion.Euler(novaRot);
             }
         }
     }
