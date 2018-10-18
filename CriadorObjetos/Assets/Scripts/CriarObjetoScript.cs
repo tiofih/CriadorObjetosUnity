@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Networking;
 using TMPro;
+using Vuforia;
 
 public class CriarObjetoScript : MonoBehaviour
 {
@@ -16,16 +17,24 @@ public class CriarObjetoScript : MonoBehaviour
     public TMP_InputField rotY;
     public TMP_InputField rotZ;
 
-    public Toggle useLocal;
+    public Toggle localToggle;
+    public Toggle vuforiaToggle;
 
     public GameObject novoObjeto;
+    public GameObject arCam;
+    public GameObject cam;
 
     Vector3 novaPos;
     Vector3 novaRot;
 
+    private void Start()
+    {
+        AtivarEDesativarVuforia(false);
+    }
+
     public void CriarObjeto()
     {
-        if (useLocal.isOn)
+        if (localToggle.isOn)
         {
             PegarCoordenadasLocal();
         }
@@ -33,27 +42,51 @@ public class CriarObjetoScript : MonoBehaviour
         {
             StartCoroutine(PegarCoordenadasGithub());
         }
+    }
 
+    public void AtivarEDesativarVuforia(bool isOn)
+    {
+        if (isOn)
+        {
+            arCam.GetComponent<Camera>().clearFlags = CameraClearFlags.SolidColor;
+            VuforiaRuntime.Instance.InitVuforia();
+            arCam.GetComponent<VuforiaBehaviour>().enabled = true;
+            arCam.GetComponent<DefaultInitializationErrorHandler>().enabled = true;
+        }
+        else
+        {
+            arCam.GetComponent<Camera>().clearFlags = CameraClearFlags.Skybox;
+            VuforiaRuntime.Instance.Deinit();
+            arCam.GetComponent<VuforiaBehaviour>().enabled = false;
+            arCam.GetComponent<DefaultInitializationErrorHandler>().enabled = false;
+        }
     }
 
     void PegarCoordenadasLocal()
     {
-        try
+        if (!vuforiaToggle.isOn)
         {
-            novaPos = new Vector3(
-            float.Parse(posX.text),
-            float.Parse(posY.text),
-            float.Parse(posZ.text));
+            try
+            {
+                novaPos = new Vector3(
+                float.Parse(posX.text),
+                float.Parse(posY.text),
+                float.Parse(posZ.text));
 
-            novaRot = new Vector3(
-            float.Parse(rotX.text),
-            float.Parse(rotY.text),
-            float.Parse(rotZ.text));
+                novaRot = new Vector3(
+                float.Parse(rotX.text),
+                float.Parse(rotY.text),
+                float.Parse(rotZ.text));
+            }
+            catch (System.Exception)
+            {
+                Debug.LogWarning("Campo Vazio");
+                return;
+            }
         }
-        catch (System.Exception)
+        else
         {
-            Debug.LogWarning("Campo Vazio");
-            return;
+
         }
         Instantiate(novoObjeto, novaPos, Quaternion.Euler(novaRot));
     }
@@ -74,7 +107,14 @@ public class CriarObjetoScript : MonoBehaviour
             string[] split = downloadText.Split(new char[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
             novaPos = new Vector3(float.Parse(split[0]), float.Parse(split[1]), float.Parse(split[2]));
             novaRot = new Vector3(float.Parse(split[3]), float.Parse(split[4]), float.Parse(split[5]));
-            Instantiate(novoObjeto, novaPos, Quaternion.Euler(novaRot));
+            if (!vuforiaToggle.isOn)
+            {
+                Instantiate(novoObjeto, novaPos, Quaternion.Euler(novaRot));
+            }
+            else
+            {
+
+            }
         }
     }
 }
